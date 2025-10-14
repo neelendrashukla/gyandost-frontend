@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: #1A2A4E; /* Deep Space Blue */
+  font-family: 'Poppins', sans-serif;
+  color: #E0E0E0; /* Light text for dark background */
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Baloo Bhai 2', cursive;
+  color: #FFD700; /* Default headings to star yellow */
+}
+
+/* Custom background for the entire app */
+#root {
+  min-height: 100vh;
+  background: radial-gradient(circle at center, #4A2A6F 0%, #1A2A4E 70%, #0D162B 100%);
+  background-attachment: fixed;
+  position: relative;
+  overflow: hidden; /* Hide floating elements overflow */
+}
+
+/* Small floating stars */
+.star-particle {
+  position: absolute;
+  background-color: #FFD700;
+  border-radius: 50%;
+  opacity: 0.7;
+  animation: float 10s ease-in-out infinite, star-blink 3s ease-in-out infinite;
+  box-shadow: 0 0 5px #00ff33;
+}
+
+@keyframes shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+.animate-shake {
+  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.animate-flicker {
+  animation: flicker 0.2s 3; /* Flicker 3 times quickly */
+}
