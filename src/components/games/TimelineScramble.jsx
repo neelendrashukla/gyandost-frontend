@@ -18,7 +18,6 @@ import {
   SortableContext,
   useSortable,
   verticalListSortingStrategy,
-  useSortable
 } from "@dnd-kit/sortable";
 
 import { CSS } from "@dnd-kit/utilities";
@@ -41,7 +40,7 @@ const messages = [
   "Badhai ho! Aap top performer ho! 🏆"
 ];
 
-// 🧩 Sortable Item Component
+// 🧩 Sortable Item Component (mobile-friendly touch-action + pointer handling)
 function SortableItem({ item, index, feedback, correctOrder }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.event });
 
@@ -49,13 +48,14 @@ function SortableItem({ item, index, feedback, correctOrder }) {
     transform: CSS.Transform.toString(transform),
     transition,
     zIndex: isDragging ? 999 : "auto",
-    boxShadow: isDragging ? "0 10px 25px rgba(0,0,0,0.3)" : "0 4px 12px rgba(0,0,0,0.1)"
+    boxShadow: isDragging ? "0 10px 25px rgba(0,0,0,0.3)" : "0 4px 12px rgba(0,0,0,0.1)",
+    touchAction: "none" // <-- IMPORTANT: prevents scrolling while touching the item
   };
 
   const glow =
-    feedback && item.year === correctOrder[index].year
+    feedback && correctOrder && item.year === correctOrder[index].year
       ? "shadow-[0_0_15px_3px_rgba(34,197,94,0.7)]"
-      : feedback && item.year !== correctOrder[index].year
+      : feedback && correctOrder && item.year !== correctOrder[index].year
       ? "animate-shake shadow-[0_0_15px_3px_rgba(239,68,68,0.7)]"
       : "";
 
@@ -66,15 +66,15 @@ function SortableItem({ item, index, feedback, correctOrder }) {
       {...attributes}
       {...listeners}
       initial={{ scale: 1 }}
-      animate={{ scale: isDragging ? 1.05 : 1 }}
+      animate={{ scale: isDragging ? 1.04 : 1 }}
       whileHover={{ scale: 1.03 }}
-      className={`p-5 rounded-2xl flex items-center justify-between cursor-grab transition-all bg-white ${glow}`}
+      className={`p-4 sm:p-5 rounded-2xl flex items-center justify-between touch-none cursor-grab transition-all bg-white ${glow}`}
     >
-      <span className="font-bold text-gray-400 mr-4 text-xl">☰</span>
-      <span className="flex-1 text-lg font-semibold text-gray-800">{item.event}</span>
-      {feedback && (
+      <span className="font-bold text-gray-400 mr-3 text-xl">☰</span>
+      <span className="flex-1 text-base sm:text-lg font-semibold text-gray-800 text-left break-words">{item.event}</span>
+      {feedback && correctOrder && (
         <span
-          className={`font-bold text-xl ${
+          className={`font-bold text-xl ml-3 ${
             item.year === correctOrder[index].year ? "text-green-500" : "text-red-500"
           }`}
         >
@@ -97,16 +97,16 @@ export default function TimelineScramble({ data, onRestart }) {
   const [score, setScore] = useState(0);
   const [motivation, setMotivation] = useState("");
 
-  // 🖱️ & 🖐️ Sensors setup
+  // Sensors: Pointer + Touch (tuned for mobile)
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 50, tolerance: 10 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 0, tolerance: 10 } })
   );
 
   // ⚙️ Setup level
   useEffect(() => {
     const levelCount = 5 + currentLevel * 2; // Easy:5, Medium:7, Hard:9
-    const levelEvents = data.events.slice(0, Math.min(levelCount, data.events.length));
+    const levelEvents = (data?.events || []).slice(0, Math.min(levelCount, (data?.events || []).length));
     setEventsPerLevel(levelEvents);
     setUserOrder(shuffleArray(levelEvents));
     setFeedback(null);
@@ -115,14 +115,40 @@ export default function TimelineScramble({ data, onRestart }) {
     setMotivation("");
   }, [data, currentLevel]);
 
-  // 🧲 Drag End Handler
+  // utility: enable/disable body-level touch-action while dragging
+  const enableBodyTouchNone = () => {
+    try {
+      document.body.style.touchAction = "none";
+      document.documentElement.style.touchAction = "none";
+      // also disable overscroll bounce on iOS while dragging
+      document.body.style.overscrollBehavior = "none";
+    } catch (e) { /* noop */ }
+  };
+  const restoreBodyTouch = () => {
+    try {
+      document.body.style.touchAction = "";
+      document.documentElement.style.touchAction = "";
+      document.body.style.overscrollBehavior = "";
+    } catch (e) { /* noop */ }
+  };
+
+  // 🧲 Drag Start/End Handlers - toggle body touch-action to prevent scroll during drag
+  const handleDragStart = () => {
+    enableBodyTouchNone();
+  };
+
   const handleDragEnd = (event) => {
+    try { restoreBodyTouch(); } catch (e) {}
     const { active, over } = event;
     if (!over) return;
     if (active.id !== over.id) {
       const oldIndex = userOrder.findIndex((i) => i.event === active.id);
       const newIndex = userOrder.findIndex((i) => i.event === over.id);
-      setUserOrder(arrayMove(userOrder, oldIndex, newIndex));
+      if (oldIndex === -1 || newIndex === -1) return;
+      setUserOrder(prev => {
+        const next = arrayMove(prev, oldIndex, newIndex);
+        return next;
+      });
       dropSound.play();
       setFeedback(null);
     }
@@ -150,6 +176,8 @@ export default function TimelineScramble({ data, onRestart }) {
     } else {
       setFeedback("incorrect");
       incorrectSound.play();
+      // small vibration on supported devices to give haptic feedback
+      if (navigator.vibrate) navigator.vibrate(80);
     }
   };
 
@@ -159,26 +187,27 @@ export default function TimelineScramble({ data, onRestart }) {
     else onRestart();
   };
 
-  if (!userOrder.length)
+  if (!(userOrder && userOrder.length))
     return <div className="text-center text-xl font-semibold py-20">Loading Game...</div>;
 
   return (
     <div
-      className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl w-full max-w-3xl mx-auto text-center shadow-2xl relative"
-      style={{ touchAction: "pan-y" }} // important for mobile drag
+      className="p-5 sm:p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl w-full max-w-3xl mx-auto text-center shadow-2xl relative"
+      // base container allows vertical scroll (pan-y). We toggle body touch-action while dragging.
+      style={{ touchAction: "pan-y" }}
     >
       <Link
         to="/game-zone"
-        className="mb-6 inline-block bg-gray-200 px-5 py-2 rounded-lg font-medium hover:bg-gray-300 transition"
+        className="mb-4 inline-block bg-gray-200 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition"
       >
         ‹ Wapas Game Zone
       </Link>
 
-      <h2 className="text-3xl font-extrabold mb-2 bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
+      <h2 className="text-2xl sm:text-3xl font-extrabold mb-2 bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
         Timeline Scramble ⏳ - {levels[currentLevel]}
       </h2>
 
-      <p className="text-gray-600 mb-6 text-lg">
+      <p className="text-gray-600 mb-5 text-base sm:text-lg">
         Ghatnaon ko unke saal ke hisaab se sahi kram me lagayein (sabse purani sabse upar)
       </p>
 
@@ -186,10 +215,16 @@ export default function TimelineScramble({ data, onRestart }) {
         Score: {score}/{userOrder.length}
       </div>
 
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragCancel={() => { restoreBodyTouch(); }}
+      >
         <SortableContext items={userOrder.map((i) => i.event)} strategy={verticalListSortingStrategy}>
           <div
-            className={`space-y-3 p-4 rounded-2xl border-2 transition-all ${
+            className={`space-y-3 p-3 sm:p-4 rounded-2xl border-2 transition-all ${
               feedback === "incorrect" ? "border-red-500 animate-shake" : "border-dashed border-gray-300"
             }`}
           >
@@ -208,9 +243,9 @@ export default function TimelineScramble({ data, onRestart }) {
 
       <motion.button
         onClick={checkOrder}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        className="mt-6 w-full bg-gradient-to-r from-purple-600 to-pink-500 text-white p-4 rounded-2xl font-bold text-2xl shadow-lg hover:shadow-2xl transition-all"
+        whileHover={{ scale: 1.03 }}
+        whileTap={{ scale: 0.97 }}
+        className="mt-5 w-full bg-gradient-to-r from-purple-600 to-pink-500 text-white p-3 sm:p-4 rounded-2xl font-bold text-lg sm:text-2xl shadow-lg hover:shadow-2xl transition-all"
       >
         Mera Order Check Karein! ✅
       </motion.button>
@@ -218,9 +253,9 @@ export default function TimelineScramble({ data, onRestart }) {
       {/* 💬 Motivational Feedback */}
       {motivation && (
         <motion.div
-          initial={{ opacity: 0, y: -10 }}
+          initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mt-4 p-4 bg-yellow-50 rounded-xl shadow-md text-lg font-semibold text-yellow-800"
+          className="mt-4 p-3 bg-yellow-50 rounded-xl shadow-md text-lg font-semibold text-yellow-800"
         >
           {motivation}
         </motion.div>
@@ -240,34 +275,40 @@ export default function TimelineScramble({ data, onRestart }) {
       {/* 🏆 Level Complete */}
       {isFinished && (
         <motion.div
-          initial={{ opacity: 0, y: -10 }}
+          initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mt-4 p-6 bg-gradient-to-br from-green-200 to-emerald-100 rounded-2xl shadow-2xl text-center"
+          className="mt-4 p-4 bg-gradient-to-br from-green-200 to-emerald-100 rounded-2xl shadow-2xl text-center"
         >
-          <h2 className="text-3xl font-bold text-green-700 mb-2">Shabash! 🎉</h2>
-          <p className="text-lg text-green-600 mb-4">
+          <h2 className="text-2xl sm:text-3xl font-bold text-green-700 mb-2">Shabash! 🎉</h2>
+          <p className="text-base sm:text-lg text-green-600 mb-3">
             Aapne sabhi ghatnaon ko sahi kram me laga diya!
           </p>
           <motion.button
             onClick={nextLevel}
-            whileHover={{ scale: 1.05 }}
-            className="bg-gradient-to-r from-emerald-500 to-green-500 text-white px-6 py-3 rounded-full font-bold shadow-lg"
+            whileHover={{ scale: 1.03 }}
+            className="bg-gradient-to-r from-emerald-500 to-green-500 text-white px-5 py-2 rounded-full font-bold shadow-lg"
           >
             {currentLevel + 1 < levels.length ? "Next Level →" : "Naya Game Khelein! 🔄"}
           </motion.button>
         </motion.div>
       )}
 
-      {/* 🖐️ Touch Drag Fix */}
+      {/* 🖐️ Touch Drag Fix (extra CSS) */}
       <style jsx>{`
         [data-dnd-kit-dragging] {
           touch-action: none !important;
         }
 
+        /* disable cursor-grab visual on touch devices */
         @media (pointer: coarse) {
           .cursor-grab {
             cursor: auto;
           }
+        }
+
+        /* small accessibility tweak so long event names wrap nicely */
+        .break-words {
+          word-break: break-word;
         }
       `}</style>
     </div>

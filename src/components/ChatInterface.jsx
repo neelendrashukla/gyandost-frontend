@@ -6,7 +6,6 @@ import { useSpeechRecognition } from '../hooks/useSpeechRecognition.js';
 
 const LearnMoreBlock = ({ content }) => {
     const links = content.split('*').filter(s => s.trim());
-
     return (
         <div className="mt-4 p-4 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-lg">
             <h4 className="font-bold text-emerald-800">और जानें (Learn More)</h4>
@@ -17,7 +16,6 @@ const LearnMoreBlock = ({ content }) => {
                     const searchUrl = isYoutube
                         ? `https://www.youtube.com/results?search_query=${encodeURIComponent(searchText)}`
                         : `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(searchText)}`;
-
                     return (
                         <li key={i} className="text-sm text-emerald-700">
                             <a href={searchUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
@@ -77,19 +75,20 @@ export default function ChatInterface({ messages, onOptionClick, onSendMessage, 
     const chatEndRef = useRef(null);
     const { speak, cancel, pause, resume, isSpeaking, isPaused } = useTextToSpeech();
     const [speakingMsgIndex, setSpeakingMsgIndex] = useState(null);
-    const { listening, transcript, startListening, stopListening, setTranscript } = useSpeechRecognition();
+    const { isListening, transcript, handleListen } = useSpeechRecognition('hi-IN'); // Hindi default
 
+    // Auto-scroll
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
+    // Live transcript update
     useEffect(() => {
         if (transcript) setUserMessage(transcript);
     }, [transcript]);
 
-    useEffect(() => {
-        return () => cancel();
-    }, [cancel]);
+    // Cleanup TTS
+    useEffect(() => () => cancel(), [cancel]);
 
     const handleSpeakClick = (text, index) => {
         if (isSpeaking && speakingMsgIndex === index) {
@@ -108,11 +107,11 @@ export default function ChatInterface({ messages, onOptionClick, onSendMessage, 
         setSpeakingMsgIndex(null);
         onSendMessage(userMessage);
         setUserMessage('');
-        setTranscript('');
     };
 
     return (
         <div className="bg-white rounded-lg shadow-xl p-4 md:p-6 flex flex-col h-[75vh] w-full overflow-hidden">
+            {/* Messages */}
             <div className="flex-1 overflow-y-auto space-y-6">
                 {messages.map((msg, index) => {
                     const { blocks, options } = parseContent(msg.text);
@@ -122,11 +121,9 @@ export default function ChatInterface({ messages, onOptionClick, onSendMessage, 
                     return (
                         <div
                             key={index}
-                            className={`flex flex-col md:flex-row ${
-                                msg.sender === 'user' ? 'md:flex-row-reverse' : ''
-                            } items-start gap-2 md:gap-4`}
+                            className={`flex flex-col md:flex-row ${msg.sender === 'user' ? 'md:flex-row-reverse' : ''} items-start gap-2 md:gap-4`}
                         >
-                            {/* ✅ Mascot upar center me for mobile */}
+                            {/* Mascot */}
                             {msg.sender === 'ai' && (
                                 <div className="flex justify-center w-full md:w-auto">
                                     <GyanDostMascot
@@ -138,18 +135,10 @@ export default function ChatInterface({ messages, onOptionClick, onSendMessage, 
                                 </div>
                             )}
 
-                            {/* ✅ Full width content area */}
-                            <div
-                                className={`p-4 rounded-lg w-full shadow-sm ${
-                                    msg.sender === 'ai' ? 'bg-gray-100' : 'bg-blue-100'
-                                }`}
-                            >
+                            {/* Message content */}
+                            <div className={`p-4 rounded-lg w-full shadow-sm ${msg.sender === 'ai' ? 'bg-gray-100' : 'bg-blue-100'}`}>
                                 <div className="flex justify-between items-center flex-wrap">
-                                    <p
-                                        className={`font-bold font-display ${
-                                            msg.sender === 'ai' ? 'text-purple-800' : 'text-brand-primary'
-                                        }`}
-                                    >
+                                    <p className={`font-bold font-display ${msg.sender === 'ai' ? 'text-purple-800' : 'text-brand-primary'}`}>
                                         {msg.sender === 'ai' ? 'GyanDost' : 'You'}
                                     </p>
 
@@ -164,90 +153,45 @@ export default function ChatInterface({ messages, onOptionClick, onSendMessage, 
                                                 </button>
                                             )}
                                             {currentMsgIsSpeaking && !isPaused && (
-                                                <button
-                                                    onClick={pause}
-                                                    className="px-3 py-1 bg-yellow-400 text-white rounded-md hover:bg-yellow-500 transition"
-                                                >
-                                                    ⏸ Pause
-                                                </button>
+                                                <button onClick={pause} className="px-3 py-1 bg-yellow-400 text-white rounded-md hover:bg-yellow-500 transition">⏸ Pause</button>
                                             )}
                                             {currentMsgIsSpeaking && isPaused && (
-                                                <button
-                                                    onClick={resume}
-                                                    className="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 transition"
-                                                >
-                                                    ▶ Resume
-                                                </button>
+                                                <button onClick={resume} className="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 transition">▶ Resume</button>
                                             )}
                                             {currentMsgIsSpeaking && (
-                                                <button
-                                                    onClick={() => {
-                                                        cancel();
-                                                        setSpeakingMsgIndex(null);
-                                                    }}
-                                                    className="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
-                                                >
-                                                    ❌ Stop
-                                                </button>
+                                                <button onClick={() => { cancel(); setSpeakingMsgIndex(null); }} className="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 transition">❌ Stop</button>
                                             )}
                                         </div>
                                     )}
                                 </div>
 
-                                {/* ✅ Content blocks */}
+                                {/* Content blocks */}
                                 {blocks.map((block, i) => {
                                     switch (block.type) {
                                         case 'paragraph':
-                                            return (
-                                                <p
-                                                    key={i}
-                                                    className="text-gray-700 whitespace-pre-wrap mt-2"
-                                                >
-                                                    {block.content}
-                                                </p>
-                                            );
+                                            return <p key={i} className="text-gray-700 whitespace-pre-wrap mt-2">{block.content}</p>;
                                         case 'quiz':
-                                            return (
-                                                <MiniQuiz
-                                                    key={i}
-                                                    quizText={block.content}
-                                                    onOptionClick={onOptionClick}
-                                                />
-                                            );
+                                            return <MiniQuiz key={i} quizText={block.content} onOptionClick={onOptionClick} />;
                                         case 'lesson_plan':
                                             return (
-                                                <div
-                                                    key={i}
-                                                    className="p-3 my-2 bg-indigo-50 border-l-4 border-indigo-500 rounded-r-lg"
-                                                >
-                                                    <h4 className="font-bold text-indigo-800">
-                                                        Today's Lesson Plan:
-                                                    </h4>
-                                                    <p className="text-gray-700 whitespace-pre-wrap mt-1">
-                                                        {block.content}
-                                                    </p>
+                                                <div key={i} className="p-3 my-2 bg-indigo-50 border-l-4 border-indigo-500 rounded-r-lg">
+                                                    <h4 className="font-bold text-indigo-800">Today's Lesson Plan:</h4>
+                                                    <p className="text-gray-700 whitespace-pre-wrap mt-1">{block.content}</p>
                                                 </div>
                                             );
                                         case 'learn_more':
-                                            return (
-                                                <LearnMoreBlock key={i} content={block.content} />
-                                            );
+                                            return <LearnMoreBlock key={i} content={block.content} />;
                                         default:
                                             return null;
                                     }
                                 })}
 
+                                {/* Options for last message */}
                                 {isLastMessage && options.length > 0 && !loading && (
                                     <div className="mt-4 space-y-2">
-                                        <p className="font-bold text-sm text-gray-600">
-                                            Aage kya karna chahenge?
-                                        </p>
+                                        <p className="font-bold text-sm text-gray-600">Aage kya karna chahenge?</p>
                                         {options.map((opt, i) => (
-                                            <button
-                                                key={i}
-                                                onClick={() => onOptionClick(opt)}
-                                                className="w-full text-left p-2 bg-white rounded shadow hover:bg-gray-200"
-                                            >
+                                            <button key={i} onClick={() => onOptionClick(opt)} className="w-full text-left p-2 bg-white rounded shadow hover:bg-gray-200">
                                                 {opt}
                                             </button>
                                         ))}
@@ -257,6 +201,7 @@ export default function ChatInterface({ messages, onOptionClick, onSendMessage, 
                         </div>
                     );
                 })}
+
                 {loading && (
                     <div className="flex justify-center">
                         <GyanDostMascot state="thinking" height="200px" width="200px" />
@@ -265,6 +210,7 @@ export default function ChatInterface({ messages, onOptionClick, onSendMessage, 
                 <div ref={chatEndRef} />
             </div>
 
+            {/* Input */}
             {!loading && (
                 <form onSubmit={handleSubmit} className="mt-4 flex gap-2 pt-4 border-t">
                     <input
@@ -273,24 +219,16 @@ export default function ChatInterface({ messages, onOptionClick, onSendMessage, 
                         onChange={(e) => setUserMessage(e.target.value)}
                         placeholder="Apna sawaal ya agla prompt yahan likhein..."
                         className="flex-1 p-3 border-2 rounded-lg"
+                        onKeyDown={(e) => e.key === 'Enter' && handleSubmit(e)}
                     />
-
                     <button
                         type="button"
-                        onClick={listening ? stopListening : startListening}
-                        className={`px-4 py-2 rounded-lg ${
-                            listening
-                                ? 'bg-red-500 text-white'
-                                : 'bg-green-500 text-white'
-                        }`}
+                        onClick={handleListen}
+                        className={`px-4 py-2 rounded-lg ${isListening ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}
                     >
-                        {listening ? 'Stop 🎤' : 'Mic 🎤'}
+                        {isListening ? 'Stop 🎤' : 'Mic 🎤'}
                     </button>
-
-                    <button
-                        type="submit"
-                        className="px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700"
-                    >
+                    <button type="submit" className="px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700">
                         Send
                     </button>
                 </form>
