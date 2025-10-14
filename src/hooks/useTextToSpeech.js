@@ -70,8 +70,8 @@ export function useTextToSpeech(onEndCallback = () => {}) {
       if (bestVoice) utterance.voice = bestVoice;
 
       utterance.lang = 'hi-IN';
-      utterance.rate = 1.25;
-      utterance.pitch = 1.7;
+      utterance.rate = 1.1;
+      utterance.pitch = 1.2;
       utteranceRef.current = utterance;
 
       utterance.onstart = () => {

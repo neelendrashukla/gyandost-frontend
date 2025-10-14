@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import GyanDostMascot from "./GyanDostMascot.jsx";
-import MiniQuiz from "./MiniQuiz.jsx"; 
+import MiniQuiz from "./MiniQuiz.jsx";
 import { useTextToSpeech } from '../hooks/useTextToSpeech.js';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition.js';
 
@@ -31,7 +31,6 @@ const LearnMoreBlock = ({ content }) => {
     );
 };
 
-// ✅ parseContent function updated (IMAGE blocks ignored)
 const parseContent = (text = '') => {
     if (!text) return { blocks: [], options: [] };
 
@@ -121,20 +120,41 @@ export default function ChatInterface({ messages, onOptionClick, onSendMessage, 
                     const currentMsgIsSpeaking = isSpeaking && speakingMsgIndex === index;
 
                     return (
-                        <div key={index} className={`flex items-start gap-4 ${msg.sender === 'user' ? 'flex-row-reverse' : ''}`}>
+                        <div
+                            key={index}
+                            className={`flex flex-col md:flex-row ${
+                                msg.sender === 'user' ? 'md:flex-row-reverse' : ''
+                            } items-start gap-2 md:gap-4`}
+                        >
+                            {/* ✅ Mascot upar center me for mobile */}
                             {msg.sender === 'ai' && (
-                                <div className="flex-shrink-0">
-                                    <GyanDostMascot state="idle" height="250px" width="250px" />
+                                <div className="flex justify-center w-full md:w-auto">
+                                    <GyanDostMascot
+                                        state="idle"
+                                        height="150px"
+                                        width="150px"
+                                        className="md:h-[250px] md:w-[250px]"
+                                    />
                                 </div>
                             )}
-                            <div className={`p-4 rounded-lg w-full shadow-sm ${msg.sender === 'ai' ? 'bg-gray-100' : 'bg-blue-100'}`}>
-                                <div className="flex justify-between items-center">
-                                    <p className={`font-bold font-display ${msg.sender === 'ai' ? 'text-purple-800' : 'text-brand-primary'}`}>
+
+                            {/* ✅ Full width content area */}
+                            <div
+                                className={`p-4 rounded-lg w-full shadow-sm ${
+                                    msg.sender === 'ai' ? 'bg-gray-100' : 'bg-blue-100'
+                                }`}
+                            >
+                                <div className="flex justify-between items-center flex-wrap">
+                                    <p
+                                        className={`font-bold font-display ${
+                                            msg.sender === 'ai' ? 'text-purple-800' : 'text-brand-primary'
+                                        }`}
+                                    >
                                         {msg.sender === 'ai' ? 'GyanDost' : 'You'}
                                     </p>
 
                                     {msg.sender === 'ai' && (
-                                        <div className="flex items-center gap-2 mt-2">
+                                        <div className="flex items-center gap-2 mt-2 flex-wrap">
                                             {!currentMsgIsSpeaking && (
                                                 <button
                                                     onClick={() => handleSpeakClick(msg.text, index)}
@@ -161,7 +181,10 @@ export default function ChatInterface({ messages, onOptionClick, onSendMessage, 
                                             )}
                                             {currentMsgIsSpeaking && (
                                                 <button
-                                                    onClick={() => { cancel(); setSpeakingMsgIndex(null); }}
+                                                    onClick={() => {
+                                                        cancel();
+                                                        setSpeakingMsgIndex(null);
+                                                    }}
                                                     className="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
                                                 >
                                                     ❌ Stop
@@ -171,22 +194,44 @@ export default function ChatInterface({ messages, onOptionClick, onSendMessage, 
                                     )}
                                 </div>
 
-                                {/* ✅ Block rendering section */}
+                                {/* ✅ Content blocks */}
                                 {blocks.map((block, i) => {
                                     switch (block.type) {
                                         case 'paragraph':
-                                            return <p key={i} className="text-gray-700 whitespace-pre-wrap mt-2">{block.content}</p>;
+                                            return (
+                                                <p
+                                                    key={i}
+                                                    className="text-gray-700 whitespace-pre-wrap mt-2"
+                                                >
+                                                    {block.content}
+                                                </p>
+                                            );
                                         case 'quiz':
-                                            return <MiniQuiz key={i} quizText={block.content} onOptionClick={onOptionClick} />;
+                                            return (
+                                                <MiniQuiz
+                                                    key={i}
+                                                    quizText={block.content}
+                                                    onOptionClick={onOptionClick}
+                                                />
+                                            );
                                         case 'lesson_plan':
                                             return (
-                                                <div key={i} className="p-3 my-2 bg-indigo-50 border-l-4 border-indigo-500 rounded-r-lg">
-                                                    <h4 className="font-bold text-indigo-800">Today's Lesson Plan:</h4>
-                                                    <p className="text-gray-700 whitespace-pre-wrap mt-1">{block.content}</p>
+                                                <div
+                                                    key={i}
+                                                    className="p-3 my-2 bg-indigo-50 border-l-4 border-indigo-500 rounded-r-lg"
+                                                >
+                                                    <h4 className="font-bold text-indigo-800">
+                                                        Today's Lesson Plan:
+                                                    </h4>
+                                                    <p className="text-gray-700 whitespace-pre-wrap mt-1">
+                                                        {block.content}
+                                                    </p>
                                                 </div>
                                             );
                                         case 'learn_more':
-                                            return <LearnMoreBlock key={i} content={block.content} />;
+                                            return (
+                                                <LearnMoreBlock key={i} content={block.content} />
+                                            );
                                         default:
                                             return null;
                                     }
@@ -194,7 +239,9 @@ export default function ChatInterface({ messages, onOptionClick, onSendMessage, 
 
                                 {isLastMessage && options.length > 0 && !loading && (
                                     <div className="mt-4 space-y-2">
-                                        <p className="font-bold text-sm text-gray-600">Aage kya karna chahenge?</p>
+                                        <p className="font-bold text-sm text-gray-600">
+                                            Aage kya karna chahenge?
+                                        </p>
                                         {options.map((opt, i) => (
                                             <button
                                                 key={i}
@@ -212,7 +259,7 @@ export default function ChatInterface({ messages, onOptionClick, onSendMessage, 
                 })}
                 {loading && (
                     <div className="flex justify-center">
-                        <GyanDostMascot state="thinking" height="250px" width="250px" />
+                        <GyanDostMascot state="thinking" height="200px" width="200px" />
                     </div>
                 )}
                 <div ref={chatEndRef} />
@@ -231,12 +278,19 @@ export default function ChatInterface({ messages, onOptionClick, onSendMessage, 
                     <button
                         type="button"
                         onClick={listening ? stopListening : startListening}
-                        className={`px-4 py-2 rounded-lg ${listening ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}
+                        className={`px-4 py-2 rounded-lg ${
+                            listening
+                                ? 'bg-red-500 text-white'
+                                : 'bg-green-500 text-white'
+                        }`}
                     >
-                        {listening ? "Stop 🎤" : "Mic 🎤"}
+                        {listening ? 'Stop 🎤' : 'Mic 🎤'}
                     </button>
 
-                    <button type="submit" className="px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700">
+                    <button
+                        type="submit"
+                        className="px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700"
+                    >
                         Send
                     </button>
                 </form>

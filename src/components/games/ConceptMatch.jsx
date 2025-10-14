@@ -261,11 +261,24 @@ export default function ConceptMatch({ data, topic, onRestart, session }) {
         </motion.div>
       ) : (
         <motion.div
-          className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3 max-w-4xl mx-auto pt-4"
-          variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.1 } } }}
-          initial="hidden"
-          animate="visible"
-        >
+            className="
+              grid 
+              grid-cols-2 
+              sm:grid-cols-3 
+              md:grid-cols-4 
+              lg:grid-cols-5 
+              xl:grid-cols-6 
+              gap-3 
+              sm:gap-4 
+              max-w-5xl 
+              mx-auto 
+              pt-4 
+              px-2
+            "
+            variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.1 } } }}
+            initial="hidden"
+            animate="visible"
+         >
           {cards.map((card, i) => {
             const isFlipped = flipped.find(c => c.id === card.id) || matched.includes(card.pairId);
             const isMatched = matched.includes(card.pairId);
@@ -277,7 +290,7 @@ export default function ConceptMatch({ data, topic, onRestart, session }) {
                 variants={cardVariants}
                 custom={i}
                 onClick={() => handleFlip(card)}
-                className="aspect-square cursor-pointer rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 relative overflow-hidden group"
+                className="aspect-square cursor-pointer rounded-xl shadow-md sm:shadow-lg hover:shadow-2xl transition-all duration-300 relative overflow-hidden group w-full h-full min-h-[80px] sm:min-h-[100px]"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -373,18 +386,25 @@ export default function ConceptMatch({ data, topic, onRestart, session }) {
 
       <style jsx>{`
         @keyframes shimmer {
-          0% {
-            transform: translateX(-100%);
-          }
-          100% {
-            transform: translateX(100%);
-          }
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
         }
         .animate-shimmer {
           background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
           animation: shimmer 2s infinite;
         }
-      `}</style>
+
+        /* 🔧 Mobile fix for super small screens */
+        @media (max-width: 400px) {
+          .grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .aspect-square {
+          min-height: 70px !important;
+       }
+     }
+  `}</style>
+
     </div>
   );
 }

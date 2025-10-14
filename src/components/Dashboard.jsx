@@ -12,13 +12,13 @@ const popSound = new Howl({ src: ["/sounds/pop.mp3"] });
 // 🎴 Dashboard Card
 function DashboardCard({ to, title, description, gradient, icon, delay, setMascotState }) {
   const colorMap = {
-    "AI Tutor": { title: "#38bdf8", desc: "#a78bfa" },
-    "Sanskriti aur Gyan": { title: "#f97316", desc: "#facc15" },
-    "AI ke Ajoobe": { title: "#14b8a6", desc: "#3b82f6" },
-    "Mind Map Explorer": { title: "#34d399", desc: "#fcd34d" },
-    "Exam Mode": { title: "#dc2626", desc: "#fb7185" },
-    "Game Zone": { title: "#ef4444", desc: "#f472b6" },
-    "Imagination's Flight": { title: "#8b5cf6", desc: "#ec4899" },
+    "AI Tutor": { title: "#2563EB", desc: "#EC4899" },
+    "Sanskriti aur Gyan": { title: "#EA580C", desc: "#FACC15" },
+    "AI ke Ajoobe": { title: "#0EA5E9", desc: "#10B981" },
+    "Mind Map Explorer": { title: "#DC2626", desc: "#FB923C" },
+    "Exam Mode": { title: "#8B5CF6", desc: "#F472B6" },
+    "Game Zone": { title: "#16A34A", desc: "#F0ABFC" },
+    "Imagination's Flight": { title: "#BE185D", desc: "#F59E0B" },
   };
 
   const colors = colorMap[title] || { title: "#ffffff", desc: "#d1d5db" };
