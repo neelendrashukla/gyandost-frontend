@@ -7,7 +7,6 @@ import { Link } from "react-router-dom";
 import {
   DndContext,
   closestCenter,
-  KeyboardSensor,
   PointerSensor,
   TouchSensor,
   useSensor,
@@ -17,7 +16,6 @@ import {
 import {
   arrayMove,
   SortableContext,
-  sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy
 } from "@dnd-kit/sortable";
@@ -98,14 +96,10 @@ export default function TimelineScramble({ data, onRestart }) {
   const [score, setScore] = useState(0);
   const [motivation, setMotivation] = useState("");
 
-  // 🖱️ Sensors setup
+  // 🖱️ & 🖐️ Sensors setup
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: { delay: 150, tolerance: 5 },
-    })
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 50, tolerance: 10 } })
   );
 
   // ⚙️ Setup level
@@ -168,7 +162,10 @@ export default function TimelineScramble({ data, onRestart }) {
     return <div className="text-center text-xl font-semibold py-20">Loading Game...</div>;
 
   return (
-    <div className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl w-full max-w-3xl mx-auto text-center shadow-2xl relative">
+    <div
+      className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl w-full max-w-3xl mx-auto text-center shadow-2xl relative"
+      style={{ touchAction: "pan-y" }} // important for mobile drag
+    >
       <Link
         to="/game-zone"
         className="mb-6 inline-block bg-gray-200 px-5 py-2 rounded-lg font-medium hover:bg-gray-300 transition"
@@ -264,6 +261,12 @@ export default function TimelineScramble({ data, onRestart }) {
       <style jsx>{`
         [data-dnd-kit-dragging] {
           touch-action: none !important;
+        }
+
+        @media (pointer: coarse) {
+          .cursor-grab {
+            cursor: auto;
+          }
         }
       `}</style>
     </div>
