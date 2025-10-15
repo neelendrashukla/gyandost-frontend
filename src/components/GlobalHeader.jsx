@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getCurrentLevel } from '../utils/levels.js';
 import ProfileDropdown from './ProfileDropdown.jsx';
 import { fetchUserAchievements } from '../api.js';
+import UserGuideModal from "./UserGuideModal.jsx";
 
 // 🏅 Badge Card
 const BadgeCard = ({ badge, isUnlocked }) => (
@@ -25,6 +26,7 @@ const BadgeCard = ({ badge, isUnlocked }) => (
 
 export default function GlobalHeader({ session, profile }) {
   const [isTrophyModalOpen, setIsTrophyModalOpen] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [achievements, setAchievements] = useState({ earnedBadges: [], allBadges: [] });
   const [loading, setLoading] = useState(true);
 
@@ -37,6 +39,10 @@ export default function GlobalHeader({ session, profile }) {
     }
   }, [session, profile]);
 
+  useEffect(() => {
+    console.log('isGuideOpen changed to:', isGuideOpen); // Debug: track state
+  }, [isGuideOpen]);
+
   if (!profile) return null;
 
   const levelInfo = getCurrentLevel(profile.xp || 0);
@@ -46,21 +52,25 @@ export default function GlobalHeader({ session, profile }) {
 
   return (
     <>
-      {/* 🔹 HEADER */}
       <header className="flex flex-col gap-2 mb-4 px-3 py-2 
         bg-gradient-to-r from-[#0f172a]/90 via-[#1e293b]/90 to-[#0f172a]/90 
         backdrop-blur-md rounded-2xl shadow-lg border border-white/20 
         sticky top-3 z-50 md:flex-row md:items-center md:justify-between">
 
-        {/* 🎓 Logo + Profile */}
         <div className="flex justify-between items-center w-full">
           <Link to="/" className="text-2xl md:text-3xl font-display font-bold text-star-yellow">
             🎓 GyanDost
           </Link>
-          <ProfileDropdown profile={profile} />
+
+          <ProfileDropdown 
+            profile={profile} 
+            onGuideClick={() => {
+              console.log('onGuideClick called from GlobalHeader! Setting isGuideOpen to true'); 
+              setIsGuideOpen(true);
+            }} 
+          />
         </div>
 
-        {/* 🌟 Level + XP + Streak + Trophy (Common block for both mobile & desktop) */}
         <motion.div
           onClick={() => setIsTrophyModalOpen(true)}
           whileHover={{ scale: 1.02 }}
@@ -68,7 +78,6 @@ export default function GlobalHeader({ session, profile }) {
           bg-white/10 rounded-xl border border-white/10 shadow-inner cursor-pointer 
           hover:bg-white/15 transition-all"
         >
-          {/* 🧠 Level Info */}
           <div className="text-center md:text-left text-white flex flex-col min-w-[180px]">
             <span className="text-sm md:text-base font-semibold text-cyan-300">
               Level {levelInfo.id} – {levelInfo.name} {levelInfo.icon}
@@ -78,7 +87,6 @@ export default function GlobalHeader({ session, profile }) {
             </span>
           </div>
 
-          {/* 🟢 XP Bar */}
           <div className="w-full md:flex-1 md:max-w-[300px]">
             <div className="w-full bg-black/30 rounded-full h-2.5 overflow-hidden">
               <motion.div
@@ -89,7 +97,6 @@ export default function GlobalHeader({ session, profile }) {
             </div>
           </div>
 
-          {/* 🔥 Streak */}
           <div
             className="flex items-center gap-1 text-orange-400 font-bold text-base md:text-lg"
             title={`${profile.current_streak || 0} Day Streak!`}
@@ -98,7 +105,6 @@ export default function GlobalHeader({ session, profile }) {
             <span className="text-xl md:text-2xl">🔥</span>
           </div>
 
-          {/* 🏆 Trophy Count */}
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
@@ -117,7 +123,7 @@ export default function GlobalHeader({ session, profile }) {
         </motion.div>
       </header>
 
-      {/* 🏅 TROPHY MODAL */}
+      {/* Trophy Modal */}
       <AnimatePresence>
         {isTrophyModalOpen && (
           <motion.div
@@ -157,6 +163,9 @@ export default function GlobalHeader({ session, profile }) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* User Guide Modal - No AnimatePresence needed for static version; parent controls mount */}
+      {isGuideOpen && <UserGuideModal onClose={() => setIsGuideOpen(false)} />}
     </>
   );
 }

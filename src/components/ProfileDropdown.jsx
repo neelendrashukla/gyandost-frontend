@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { LanguageContext } from "../context/LanguageContext.jsx";
 import { supabase } from "../lib/supabase.js";
 
-export default function ProfileDropdown({ profile }) {
+export default function ProfileDropdown({ profile, onGuideClick }) {
     const [isOpen, setIsOpen] = useState(false);
     const { language, setLanguage } = useContext(LanguageContext);
     const dropdownRef = useRef(null);
@@ -57,6 +57,7 @@ export default function ProfileDropdown({ profile }) {
                             <p className="font-bold text-purple-800 text-lg">{profile.full_name}</p>
                             <p className="text-sm text-purple-600">Class {profile.user_class}</p>
                         </div>
+
                         <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50">
                             <label className="text-sm font-semibold text-purple-700 mb-1 block">Language</label>
                             <select 
@@ -72,6 +73,18 @@ export default function ProfileDropdown({ profile }) {
                                 <option value="english">English</option>
                             </select>
                         </div>
+
+                        <button 
+                            onClick={() => { 
+                              console.log('Guide button clicked!'); 
+                              onGuideClick(); 
+                              setIsOpen(false); 
+                            }} 
+                            className="w-full text-left px-4 py-3 hover:bg-gray-100 font-semibold text-gray-700"
+                        >
+                            Help & User Guide ❓
+                        </button>
+
                         <button 
                             onClick={handleLogout} 
                             className="w-full text-left px-4 py-3 mt-2 text-white bg-gradient-to-r from-red-400 to-red-600 hover:from-red-500 hover:to-red-700 font-semibold rounded-b-lg shadow-md transition-all"

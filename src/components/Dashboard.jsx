@@ -159,7 +159,7 @@ export default function Dashboard({ session, profile }) {
   const cards = [
     {
       to: "/ai-tutor",
-      title: "AI Tutor 🤖",
+      title: "AI Tutor 🎓",
       description: "Kisi bhi topic pe AI se deep dive karo—easy, fun aur detailed learning! 📚✨",
       gradient: "bg-gradient-to-br from-blue-600 to-purple-700",
       icon: "/icons/ai_tutor.png",
