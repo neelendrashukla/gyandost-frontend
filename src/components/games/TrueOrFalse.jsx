@@ -21,7 +21,8 @@ export default function TrueOrFalse({ data, onRestart }) {
   const { statements } = data;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [score, setScore] = useState(0);
-  const [feedback, setFeedback] = useState(null); // null, 'correct', 'incorrect'
+  const [feedback, setFeedback] = useState(null); 
+  const [feedbackMessage, setFeedbackMessage] = useState(""); 
   const [isFinished, setIsFinished] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
 
@@ -30,16 +31,19 @@ export default function TrueOrFalse({ data, onRestart }) {
   const handleAnswer = (userChoice) => {
     if (feedback || !currentStatement) return;
 
+    let message = "";
     if (userChoice === currentStatement.is_true) {
       setFeedback('correct');
+      message = correctFeedbacks[Math.floor(Math.random() * correctFeedbacks.length)];
       correctSound.play();
-      toast.success(correctFeedbacks[Math.floor(Math.random() * correctFeedbacks.length)]);
       setScore(s => s + 1);
     } else {
       setFeedback('incorrect');
+      message = incorrectFeedbacks[Math.floor(Math.random() * incorrectFeedbacks.length)];
       incorrectSound.play();
-      toast.error(incorrectFeedbacks[Math.floor(Math.random() * incorrectFeedbacks.length)]);
     }
+
+    setFeedbackMessage(message);
 
     setTimeout(() => {
       if (currentIndex === statements.length - 1) {
@@ -49,8 +53,9 @@ export default function TrueOrFalse({ data, onRestart }) {
       } else {
         setCurrentIndex(i => i + 1);
         setFeedback(null);
+        setFeedbackMessage("");
       }
-    }, 1500);
+    }, 3000); // Increased timeout to allow reading feedback
   };
   
   const getFinalFeedback = () => {
@@ -145,11 +150,16 @@ export default function TrueOrFalse({ data, onRestart }) {
             <motion.div 
                 initial={{ y: 20, opacity: 0 }} 
                 animate={{ y: 0, opacity: 1 }}
-                className="mt-4 h-10" // Added a fixed height to prevent layout shift
+                className="mt-4"
             >
                 <p className={`text-xl font-bold ${feedback === 'correct' ? 'text-green-600' : 'text-red-600'}`}>
-                    {feedback === 'correct' ? "Bilkul Sahi!" : `Oops! Sahi jawaab tha: ${currentStatement.is_true ? 'Sahi' : 'Galat'}`}
+                    {feedbackMessage}
                 </p>
+                {feedback === 'incorrect' && (
+                  <p className="text-lg text-gray-700 mt-2 p-3 bg-gray-100 rounded-lg">
+                    Sahi jawaab tha: {currentStatement.is_true ? 'Sahi' : 'Galat'}
+                  </p>
+                )}
             </motion.div>
         )}
       </AnimatePresence>

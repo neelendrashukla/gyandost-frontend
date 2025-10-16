@@ -32,12 +32,20 @@ const dropSound = new Howl({ src: ["/sounds/drop.mp3"], volume: 0.5 });
 const shuffleArray = (array) => [...array].sort(() => Math.random() - 0.5);
 
 // 💬 Motivational messages
-const messages = [
+const positiveMessages = [
   "Shabash! Aapne kamaal kiya! 🌟",
   "Wah! Lagta hai aap expert ho! 🚀",
   "Correct! Keep it up! 💪",
   "Nice! Practice se perfect! 🎯",
   "Badhai ho! Aap top performer ho! 🏆"
+];
+
+const negativeMessages = [
+  "Thoda aur try karo! 😊",
+  "Galat hai, phir se dekho! 🔄",
+  "Koshish karte raho! 💪",
+  "Abhi nahi, practice karo! 📚",
+  "Galtiyan hoti hain, seekho! 📖"
 ];
 
 // 🧩 Sortable Item Component (mobile-friendly touch-action + pointer handling)
@@ -165,15 +173,17 @@ export default function TimelineScramble({ data, onRestart }) {
     }
 
     setScore(tempScore);
-    const msg = messages[Math.floor(Math.random() * messages.length)];
-    setMotivation(msg);
 
     if (allCorrect) {
+      const msg = positiveMessages[Math.floor(Math.random() * positiveMessages.length)];
+      setMotivation(msg);
       setFeedback("correct");
       winSound.play();
       setShowConfetti(true);
       setIsFinished(true);
     } else {
+      const msg = negativeMessages[Math.floor(Math.random() * negativeMessages.length)];
+      setMotivation(msg);
       setFeedback("incorrect");
       incorrectSound.play();
       // small vibration on supported devices to give haptic feedback
@@ -208,7 +218,7 @@ export default function TimelineScramble({ data, onRestart }) {
       </h2>
 
       <p className="text-gray-600 mb-5 text-base sm:text-lg">
-        Ghatnaon ko unke saal ke hisaab se sahi kram me lagayein (sabse purani sabse upar)
+        Ghatnaon ko sahi kram me lagayein (sabse purani sabse upar)
       </p>
 
       <div className="mb-4 text-lg font-semibold">
@@ -255,7 +265,11 @@ export default function TimelineScramble({ data, onRestart }) {
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mt-4 p-3 bg-yellow-50 rounded-xl shadow-md text-lg font-semibold text-yellow-800"
+          className={`mt-4 p-3 rounded-xl shadow-md text-lg font-semibold transition-all ${
+            feedback === "correct" 
+              ? "bg-green-50 text-green-800" 
+              : "bg-red-50 text-red-800"
+          }`}
         >
           {motivation}
         </motion.div>

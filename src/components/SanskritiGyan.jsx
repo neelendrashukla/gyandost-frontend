@@ -85,16 +85,15 @@ export default function SanskritiGyan({ session }) {
             </div>
 
             {!lessonStarted ? (
-                <div className="space-y-4">
+                  <div className="space-y-4">
                     <TopicSelector onTopicSelect={startLesson} popularTopics={popularSanskritiTopics} title="Kisi vishay ke baare me gehraai se jaanein!" />
-                    <div className="my-4 flex items-center text-center"><hr className="w-full"/><span className="px-2 text-gray-400">YA</span><hr className="w-full"/></div>
-                    <SearchComponent
-                        onSearch={startLesson}
-                        placeholder="Granth, Mahapurush, ya Itihas..."
-                        buttonText="Explore"
-                        loading={loading}
-                    />
-                </div>
+                    <div className="my-4 flex items-center text-center"><hr className="w-full" /><span className="px-2 text-gray-400">YA</span><hr className="w-full" /></div>
+                    <SearchComponent 
+                      onSearch={startLesson}
+                      placeholder="Granth, Mahapurush, ya Itihas..."
+                      buttonText="Explore"
+                      loading={loading} />
+                  </div>
             ) : (
                 <>
                     <button onClick={resetLesson} className="mb-4 bg-gray-200 px-4 py-2 rounded-lg">‹ Naya Topic Chunein</button>
