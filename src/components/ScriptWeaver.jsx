@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, lazy, Suspense } from 'react';
 import { useProfile } from "../hooks/useProfile.js";
 import { LanguageContext } from '../context/LanguageContext.jsx';
 import { fetchStartScript, fetchImprovedScriptSegment, fetchFinishScript, fetchCreativeTopics } from "../api.js";
@@ -7,10 +7,12 @@ import { Link } from 'react-router-dom';
 import SearchComponent from "./SearchComponent.jsx";
 import GyanDostMascot from "./GyanDostMascot.jsx";
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition.js';
-import Confetti from 'react-confetti';
 import { Howl } from 'howler';
 
+const Confetti = lazy(() => import('react-confetti'));
+
 const winSound = new Howl({ src: ['/sounds/win.mp3'] });
+
 const scriptGenres = [
   { name: 'Comedy', emoji: '😂' }, { name: 'Action', emoji: '💥' },
   { name: 'Mystery', emoji: '🕵️' }, { name: 'Drama', emoji: '🎭' },
@@ -24,6 +26,7 @@ const scriptGenres = [
 export default function ScriptWeaver({ session }) {
   const { profile } = useProfile(session?.user);
   const { language } = useContext(LanguageContext);
+
   const [scriptText, setScriptText] = useState("");
   const [userLine, setUserLine] = useState("");
   const [loading, setLoading] = useState(false);
@@ -33,18 +36,21 @@ export default function ScriptWeaver({ session }) {
   const [suggestedTopics, setSuggestedTopics] = useState([]);
   const { isListening, transcript, handleListen } = useSpeechRecognition();
 
-  useEffect(() => { if (transcript) setUserLine(transcript); }, [transcript]);
+  // Update input from speech
+  useEffect(() => {
+    if (transcript) setUserLine(transcript);
+  }, [transcript]);
 
+  // Fetch suggested topics
   useEffect(() => {
     const getTopics = async () => {
-      if (selectedGenre && profile) {
-        setLoading(true);
-        try {
-          const res = await fetchCreativeTopics(selectedGenre, profile.user_class, language);
-          setSuggestedTopics(res.topics || []);
-        } catch (error) { console.error(error); }
-        finally { setLoading(false); }
-      }
+      if (!selectedGenre || !profile) return;
+      setLoading(true);
+      try {
+        const res = await fetchCreativeTopics(selectedGenre, profile.user_class, language);
+        setSuggestedTopics(res.topics || []);
+      } catch (err) { console.error(err); }
+      finally { setLoading(false); }
     };
     getTopics();
   }, [selectedGenre, profile, language]);
@@ -56,7 +62,7 @@ export default function ScriptWeaver({ session }) {
       const res = await fetchStartScript(scene, selectedGenre, profile.user_class, language);
       setScriptText(res.script || "");
       setScriptStarted(true);
-    } catch { alert("Sorry, AI script shuru nahi kar paa raha hai."); }
+    } catch { alert("AI script start nahi kar paa raha."); }
     finally { setLoading(false); }
   };
 
@@ -69,10 +75,10 @@ export default function ScriptWeaver({ session }) {
     try {
       const res = await fetchImprovedScriptSegment(scriptText, userLineText, selectedGenre, profile.user_class, language);
       setScriptText(prev => prev + '\n' + res.improved_user_line + '\n' + res.ai_line);
-    } catch { alert("Sorry, AI thoda busy hai."); } 
+    } catch { alert("AI busy hai."); }
     finally { setLoading(false); }
   };
-  
+
   const handleFinishScript = async () => {
     setLoading(true);
     try {
@@ -80,7 +86,7 @@ export default function ScriptWeaver({ session }) {
       setScriptText(prev => prev + `\n\n--- THE END ---\n${res.finalPart}`);
       setIsFinished(true);
       winSound.play();
-    } catch { alert("Sorry, AI natak khatam nahi kar paa raha hai."); }
+    } catch { alert("AI script finish nahi kar paa raha."); }
     finally { setLoading(false); }
   };
 
@@ -95,13 +101,13 @@ export default function ScriptWeaver({ session }) {
   };
 
   const reset = () => {
-    setScriptText("");
+    setScriptText('');
     setSelectedGenre(null);
     setScriptStarted(false);
     setIsFinished(false);
   };
 
-  // ----- Render -----
+  // ----- Renders -----
   if (!selectedGenre) {
     return (
       <div className="text-center max-w-lg mx-auto">
@@ -143,7 +149,11 @@ export default function ScriptWeaver({ session }) {
 
   return (
     <div className="flex flex-col h-screen max-w-3xl mx-auto p-4">
-      {isFinished && <Confetti recycle={false} />}
+      {isFinished && (
+        <Suspense fallback={null}>
+          <Confetti recycle={false} numberOfPieces={window.innerWidth < 768 ? 150 : 400} />
+        </Suspense>
+      )}
 
       <div className="flex justify-between mb-4">
         <button onClick={reset} className="bg-gray-200 px-4 py-2 rounded-lg">‹ Naya Natak</button>
@@ -154,6 +164,7 @@ export default function ScriptWeaver({ session }) {
 
       <div className="flex-1 bg-white p-6 rounded-lg shadow-card overflow-y-auto mb-4 border-2 border-indigo-200">
         <p className="text-lg whitespace-pre-wrap text-gray-800 font-mono">{scriptText}</p>
+        {loading && <GyanDostMascot state="thinking" size="small" />}
       </div>
 
       {!isFinished && (
@@ -164,7 +175,7 @@ export default function ScriptWeaver({ session }) {
           <input
             type="text"
             value={userLine}
-            onChange={(e) => setUserLine(e.target.value)}
+            onChange={e => setUserLine(e.target.value)}
             placeholder="Character: Dialogue..."
             className="flex-1 px-4 py-3 border-2 rounded-lg focus:outline-none focus:border-indigo-500"
             disabled={loading}
@@ -175,7 +186,7 @@ export default function ScriptWeaver({ session }) {
       )}
 
       {isFinished && (
-        <motion.div initial={{opacity: 0}} animate={{opacity: 1}} className="text-center p-4 bg-green-100 rounded-lg mt-2">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center p-4 bg-green-100 rounded-lg mt-2">
           <h3 className="text-2xl font-bold text-green-700">Natak Poora Hua! 🎭</h3>
           <p className="text-gray-600 mt-2">Shabash! Aap ek behtareen lekhak hain.</p>
         </motion.div>

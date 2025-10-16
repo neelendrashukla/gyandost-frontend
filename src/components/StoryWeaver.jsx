@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, lazy, Suspense } from 'react';
 import { useProfile } from "../hooks/useProfile.js";
 import { LanguageContext } from '../context/LanguageContext.jsx';
 import { fetchStartStory, fetchImprovedStorySegment, fetchFinishStory, fetchCreativeTopics } from "../api.js";
@@ -7,10 +7,12 @@ import { Link } from 'react-router-dom';
 import SearchComponent from "./SearchComponent.jsx";
 import GyanDostMascot from "./GyanDostMascot.jsx";
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition.js';
-import Confetti from 'react-confetti';
 import { Howl } from 'howler';
 
+const Confetti = lazy(() => import('react-confetti'));
+
 const winSound = new Howl({ src: ['/sounds/win.mp3'] });
+
 const storyGenres = [
   { name: 'Adventure', emoji: '🚀' }, { name: 'Mystery', emoji: '🕵️' },
   { name: 'Funny', emoji: '😂' }, { name: 'Fantasy', emoji: '🦄' },
@@ -24,6 +26,7 @@ const storyGenres = [
 export default function StoryWeaver({ session }) {
   const { profile } = useProfile(session?.user);
   const { language } = useContext(LanguageContext);
+
   const [story, setStory] = useState([]);
   const [userLine, setUserLine] = useState("");
   const [loading, setLoading] = useState(false);
@@ -37,14 +40,13 @@ export default function StoryWeaver({ session }) {
 
   useEffect(() => {
     const getTopics = async () => {
-      if (selectedGenre && profile) {
-        setLoading(true);
-        try {
-          const res = await fetchCreativeTopics(selectedGenre, profile.user_class, language);
-          setSuggestedTopics(res.topics || []);
-        } catch (error) { console.error(error); }
-        finally { setLoading(false); }
-      }
+      if (!selectedGenre || !profile) return;
+      setLoading(true);
+      try {
+        const res = await fetchCreativeTopics(selectedGenre, profile.user_class, language);
+        setSuggestedTopics(res.topics || []);
+      } catch (err) { console.error(err); }
+      finally { setLoading(false); }
     };
     getTopics();
   }, [selectedGenre, profile, language]);
@@ -56,9 +58,8 @@ export default function StoryWeaver({ session }) {
       const res = await fetchStartStory(topic, selectedGenre, profile.user_class, language);
       setStory(res.lines ? [{ author: 'ai', text: res.lines }] : []);
       setStoryStarted(true);
-    } catch {
-      alert("Sorry, AI kahani shuru nahi kar paa raha hai.");
-    } finally { setLoading(false); }
+    } catch { alert("AI kahani start nahi kar paa raha."); }
+    finally { setLoading(false); }
   };
 
   const handleAddLine = async (e) => {
@@ -78,7 +79,7 @@ export default function StoryWeaver({ session }) {
         return [...updatedStory, { author: 'user', text: res.improved_user_line }, { author: 'ai', text: res.ai_line }];
       });
     } catch {
-      alert("Sorry, AI thoda busy hai.");
+      alert("AI busy hai.");
       setStory(prev => prev.slice(0, -1));
     } finally { setLoading(false); }
   };
@@ -91,9 +92,8 @@ export default function StoryWeaver({ session }) {
       setStory(prev => [...prev, { author: 'ai', text: `\n--- THE END ---\n${res.finalPart}` }]);
       setIsFinished(true);
       winSound.play();
-    } catch {
-      alert("Sorry, AI kahani khatam nahi kar paa raha hai.");
-    } finally { setLoading(false); }
+    } catch { alert("AI kahani finish nahi kar paa raha."); }
+    finally { setLoading(false); }
   };
 
   const handleSaveStory = () => {
@@ -114,7 +114,7 @@ export default function StoryWeaver({ session }) {
     setIsFinished(false);
   };
 
-  // ----- Render -----
+  // ----- Renders -----
   if (!selectedGenre) {
     return (
       <div className="text-center max-w-lg mx-auto">
@@ -156,7 +156,11 @@ export default function StoryWeaver({ session }) {
 
   return (
     <div className="flex flex-col h-screen w-full bg-gray-50 p-4">
-      {isFinished && <Confetti recycle={false} />}
+      {isFinished && (
+        <Suspense fallback={null}>
+          <Confetti recycle={false} numberOfPieces={window.innerWidth < 768 ? 150 : 400} />
+        </Suspense>
+      )}
 
       <div className="flex justify-between mb-4">
         <button onClick={reset} className="bg-gray-200 px-4 py-2 rounded-lg">‹ Nayi Kahani</button>
@@ -175,27 +179,25 @@ export default function StoryWeaver({ session }) {
       </div>
 
       {!isFinished && (
-        <>
-          <form onSubmit={handleAddLine} className="flex gap-3 mb-4">
-            <input
-              type="text"
-              value={userLine}
-              onChange={(e) => setUserLine(e.target.value)}
-              placeholder="Agli line likhein ya bolein..."
-              className="flex-1 px-4 py-3 border-2 rounded-lg focus:outline-none focus:border-blue-500 disabled:opacity-50"
-              disabled={loading}
-            />
-            <button
-              type="button"
-              onClick={handleListen}
-              className={`px-4 py-2 rounded-lg transition-colors ${isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-gray-200 hover:bg-gray-300'}`}
-            >
-              <span className="text-2xl">🎤</span>
-            </button>
-            <button type="submit" disabled={loading || !userLine.trim()} className="bg-blue-600 text-white px-4 py-2 rounded-lg">Add</button>
-            <button type="button" onClick={handleFinishStory} disabled={loading} className="bg-green-600 text-white px-4 py-2 rounded-lg">Finish</button>
-          </form>
-        </>
+        <form onSubmit={handleAddLine} className="flex gap-3 mb-4">
+          <input
+            type="text"
+            value={userLine}
+            onChange={(e) => setUserLine(e.target.value)}
+            placeholder="Agli line likhein ya bolein..."
+            className="flex-1 px-4 py-3 border-2 rounded-lg focus:outline-none focus:border-blue-500 disabled:opacity-50"
+            disabled={loading}
+          />
+          <button
+            type="button"
+            onClick={handleListen}
+            className={`px-4 py-2 rounded-lg transition-colors ${isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-gray-200 hover:bg-gray-300'}`}
+          >
+            <span className="text-2xl">🎤</span>
+          </button>
+          <button type="submit" disabled={loading || !userLine.trim()} className="bg-blue-600 text-white px-4 py-2 rounded-lg">Add</button>
+          <button type="button" onClick={handleFinishStory} disabled={loading} className="bg-green-600 text-white px-4 py-2 rounded-lg">Finish</button>
+        </form>
       )}
 
       {isFinished && (

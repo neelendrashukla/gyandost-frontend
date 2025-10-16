@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useState, useContext, useEffect, lazy, Suspense, useMemo } from "react";
 import { useProfile } from "../hooks/useProfile.js";
 import { LanguageContext } from "../context/LanguageContext.jsx";
 import {
@@ -12,12 +12,15 @@ import { Link } from "react-router-dom";
 import SearchComponent from "./SearchComponent.jsx";
 import GyanDostMascot from "./GyanDostMascot.jsx";
 import { useSpeechRecognition } from "../hooks/useSpeechRecognition.js";
-import Confetti from "react-confetti";
 import { Howl } from "howler";
 import { toast } from "react-hot-toast";
 
+const Confetti = lazy(() => import("react-confetti"));
+
+// --- Sounds ---
 const winSound = new Howl({ src: ["/sounds/win.mp3"] });
 
+// --- Genres ---
 const poemGenres = [
   { name: "Funny", emoji: "😂" },
   { name: "Motivational", emoji: "💪" },
@@ -48,30 +51,32 @@ export default function PoemWeaver({ session }) {
 
   const { isListening, transcript, handleListen } = useSpeechRecognition();
 
-  // Mic speech updates input
+  // Hoist useMemo to top level (before any early returns)
+  const poemContent = useMemo(() => poemText, [poemText]);
+
+  // Update user line from mic
   useEffect(() => {
     if (transcript) setUserLine(transcript);
   }, [transcript]);
 
-  // Fetch topic ideas
+  // Fetch topics only when genre/profile/language change
   useEffect(() => {
-    const getTopics = async () => {
-      if (selectedGenre && profile) {
-        setLoading(true);
-        try {
-          const res = await fetchCreativeTopics(selectedGenre, profile.user_class, language);
-          setSuggestedTopics(res.topics || []);
-        } catch (error) {
-          console.error(error);
-        } finally {
-          setLoading(false);
-        }
+    if (!selectedGenre || !profile) return;
+    const fetchTopics = async () => {
+      setLoading(true);
+      try {
+        const res = await fetchCreativeTopics(selectedGenre, profile.user_class, language);
+        setSuggestedTopics(res.topics || []);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
       }
     };
-    getTopics();
+    fetchTopics();
   }, [selectedGenre, profile, language]);
 
-  // Start poem
+  // --- Start Poem ---
   const handleStartPoem = async (topic) => {
     if (!topic.trim() || !profile || !selectedGenre) return;
     setSelectedTopic(topic);
@@ -80,60 +85,48 @@ export default function PoemWeaver({ session }) {
       const res = await fetchStartPoem(topic, selectedGenre, profile.user_class, language);
       setPoemText(res.lines || "");
       setPoemStarted(true);
-    } catch (error) {
-      alert("Sorry, AI kavita shuru nahi kar paa raha hai.");
+    } catch {
+      toast.error("AI kavita shuru nahi kar paa raha hai.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Add line
+  // --- Add line ---
   const handleAddLine = async (e) => {
     e.preventDefault();
     if (!userLine.trim()) return;
-    const poemSoFarText = poemText;
-    const userLineText = userLine;
+    const poemSoFar = poemText;
+    const line = userLine;
     setUserLine("");
     setLoading(true);
     try {
-      const res = await fetchImprovedPoemSegment(
-        poemSoFarText,
-        userLineText,
-        selectedGenre,
-        profile.user_class,
-        language
-      );
+      const res = await fetchImprovedPoemSegment(poemSoFar, line, selectedGenre, profile.user_class, language);
       setPoemText((prev) => prev + "\n" + res.improved_user_line + "\n" + res.ai_line);
-    } catch (error) {
-      alert("Sorry, AI thoda busy hai.");
+    } catch {
+      toast.error("AI thoda busy hai. Try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Finish poem
+  // --- Finish Poem ---
   const handleFinishPoem = async () => {
-    const poemSoFarText = poemText;
     setLoading(true);
     try {
-      const res = await fetchFinishPoem(
-        poemSoFarText,
-        selectedGenre,
-        profile.user_class,
-        language
-      );
+      const res = await fetchFinishPoem(poemText, selectedGenre, profile.user_class, language);
       setPoemText((prev) => prev + `\n\n--- THE END ---\n${res.finalPart}`);
       setIsFinished(true);
       winSound.play();
       toast.success("Kavita poori ho gayi! ✨");
-    } catch (error) {
-      alert("Sorry, AI kavita khatam nahi kar paa raha hai.");
+    } catch {
+      toast.error("AI kavita khatam nahi kar paa raha hai.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Save poem as file
+  // --- Save Poem ---
   const handleSavePoemToFile = () => {
     const fileName = `${selectedTopic || "poem"}-${Date.now()}.txt`;
     const blob = new Blob([poemText], { type: "text/plain;charset=utf-8" });
@@ -146,7 +139,7 @@ export default function PoemWeaver({ session }) {
     toast.success("Kavita file ke roop me download ho gayi! 💾");
   };
 
-  // Reset poem
+  // --- Reset ---
   const reset = () => {
     setPoemText("");
     setSelectedGenre(null);
@@ -155,16 +148,11 @@ export default function PoemWeaver({ session }) {
     setSelectedTopic("");
   };
 
-  // Choose genre screen
+  // --- Genre selection ---
   if (!selectedGenre) {
     return (
       <div className="text-center max-w-lg mx-auto">
-        <Link
-          to="/creative-corner"
-          className="mb-4 inline-block bg-gray-200 px-4 py-2 rounded-lg"
-        >
-          ‹ Wapas
-        </Link>
+        <Link to="/creative-corner" className="mb-4 inline-block bg-gray-200 px-4 py-2 rounded-lg">‹ Wapas</Link>
         <h1 className="text-4xl font-bold mb-4">Kavita Weaver</h1>
         <p className="mb-6 text-gray-600">Aap kis mood ki kavita likhna chahte hain?</p>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -184,75 +172,50 @@ export default function PoemWeaver({ session }) {
     );
   }
 
-  // Choose topic screen
+  // --- Topic selection ---
   if (!poemStarted) {
     return (
       <div className="max-w-2xl mx-auto text-center">
-        <button
-          onClick={() => setSelectedGenre(null)}
-          className="mb-4 inline-block bg-gray-200 px-4 py-2 rounded-lg"
-        >
-          ‹ Wapas Genre Chunein
-        </button>
+        <button onClick={() => setSelectedGenre(null)} className="mb-4 inline-block bg-gray-200 px-4 py-2 rounded-lg">‹ Wapas Genre Chunein</button>
         <h1 className="text-4xl font-display font-bold text-pink-500 mb-4">✍️ Kavita Weaver</h1>
-        <p className="text-gray-600 mb-6">
-          "Topic for your <span className="font-bold">{selectedGenre}</span> poem?"
-        </p>
-
+        <p className="text-gray-600 mb-6">Topic for your <span className="font-bold">{selectedGenre}</span> poem?</p>
         <div className="mb-4 p-4 bg-gray-50 rounded-lg">
           <h3 className="font-semibold mb-2">Kuch Ideas...</h3>
           <div className="flex flex-wrap justify-center gap-2">
-            {loading ? (
-              <p>Loading ideas...</p>
-            ) : (
+            {loading ? <p>Loading ideas...</p> :
               suggestedTopics.map((topic) => (
-                <button
-                  key={topic}
-                  onClick={() => handleStartPoem(topic)}
-                  className="bg-gray-200 px-3 py-1 rounded-full"
-                >
-                  {topic}
-                </button>
+                <button key={topic} onClick={() => handleStartPoem(topic)} className="bg-gray-200 px-3 py-1 rounded-full">{topic}</button>
               ))
-            )}
+            }
           </div>
         </div>
-
-        <SearchComponent
-          onSearch={handleStartPoem}
-          placeholder="Ya apna topic likhein..."
-          buttonText="Shuru Karein!"
-        />
+        <SearchComponent onSearch={handleStartPoem} placeholder="Ya apna topic likhein..." buttonText="Shuru Karein!" />
       </div>
     );
   }
 
-  // Poem writing screen
+  // --- Poem writing screen ---
   return (
     <div className="flex flex-col h-screen max-w-3xl mx-auto p-4">
-      {isFinished && <Confetti recycle={false} />}
+      {isFinished && (
+        <Suspense fallback={null}>
+          <Confetti recycle={false} numberOfPieces={window.innerWidth < 768 ? 150 : 400} />
+        </Suspense>
+      )}
 
       <div className="flex justify-between mb-4">
         <button onClick={reset} className="bg-gray-200 px-4 py-2 rounded-lg">‹ Nayi Kavita</button>
-        {isFinished && (
-          <button onClick={handleSavePoemToFile} className="bg-yellow-500 text-white px-4 py-2 rounded-lg">Save Poem 💾</button>
-        )}
+        {isFinished && <button onClick={handleSavePoemToFile} className="bg-yellow-500 text-white px-4 py-2 rounded-lg">Save Poem 💾</button>}
       </div>
 
       <div className="flex-1 bg-white p-6 rounded-lg shadow-card overflow-y-auto mb-4 border-2 border-pink-200">
-        <p className="text-lg md:text-xl whitespace-pre-wrap text-gray-800 font-mono">{poemText}</p>
+        <p className="text-lg md:text-xl whitespace-pre-wrap text-gray-800 font-mono">{poemContent}</p>
         {loading && <GyanDostMascot state="thinking" size="small" />}
       </div>
 
       {!isFinished && (
         <form onSubmit={handleAddLine} className="flex gap-3 items-center">
-          <button
-            type="button"
-            onClick={handleListen}
-            className={`p-3 rounded-full ${isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-gray-200 hover:bg-gray-300'}`}
-          >
-            🎤
-          </button>
+          <button type="button" onClick={handleListen} className={`p-3 rounded-full ${isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-gray-200 hover:bg-gray-300'}`}>🎤</button>
           <input
             type="text"
             value={userLine}

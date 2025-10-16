@@ -16,7 +16,7 @@ const GuideSection = ({ icon, title, children }) => (
       <span style={{ fontSize: '1.875rem' }}>{icon}</span> {title}
     </h3>
     <p style={{ 
-      color: '#111827',  // Dark gray/black for clear visibility
+      color: '#111827',  
       marginTop: '0.5rem', 
       paddingLeft: '2.5rem',
       fontSize: '1rem',
@@ -27,7 +27,7 @@ const GuideSection = ({ icon, title, children }) => (
 
 export default function UserGuideModal({ onClose }) {
   useEffect(() => {
-    console.log('UserGuideModal rendering!'); // Debug: confirms mount
+    console.log('UserGuideModal rendering!'); 
   }, []);
 
   // Check for modal-root
@@ -37,7 +37,7 @@ export default function UserGuideModal({ onClose }) {
     return null;
   }
 
-  // Modal content - simplified with inline styles for testing visibility
+  // Modal content 
   const modalContent = (
     <div 
       style={{ 
@@ -46,7 +46,7 @@ export default function UserGuideModal({ onClose }) {
         left: 0, 
         width: '100%', 
         height: '100%', 
-        backgroundColor: 'rgba(0, 0, 0, 0.6)', // Inline for backdrop
+        backgroundColor: 'rgba(0, 0, 0, 0.6)', 
         backdropFilter: 'blur(4px)',
         display: 'flex', 
         alignItems: 'center', 
@@ -58,7 +58,7 @@ export default function UserGuideModal({ onClose }) {
     >
       <div 
         style={{ 
-          backgroundColor: 'white', // Inline for white bg
+          backgroundColor: 'white', 
           borderRadius: '16px', 
           width: '100%', 
           maxWidth: '48rem', 
@@ -68,7 +68,7 @@ export default function UserGuideModal({ onClose }) {
           padding: '1.5rem', 
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', 
           overflowY: 'auto'
-          // Removed temporary red border
+          
         }}
         onClick={(e) => e.stopPropagation()}
       >

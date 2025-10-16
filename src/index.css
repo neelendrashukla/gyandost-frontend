@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 🌌 Cosmic Theme Base */
 body {
   background-color: #1A2A4E; /* Deep Space Blue */
   font-family: 'Poppins', sans-serif;
@@ -10,19 +11,19 @@ body {
 
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Baloo Bhai 2', cursive;
-  color: #FFD700; /* Default headings to star yellow */
+  color: #FFD700; /* Headings in star yellow */
 }
 
-/* Custom background for the entire app */
+/* 🌠 Background Gradient */
 #root {
   min-height: 100vh;
   background: radial-gradient(circle at center, #4A2A6F 0%, #1A2A4E 70%, #0D162B 100%);
   background-attachment: fixed;
   position: relative;
-  overflow: hidden; /* Hide floating elements overflow */
+  overflow: hidden;
 }
 
-/* Small floating stars */
+/* ✨ Small floating stars */
 .star-particle {
   position: absolute;
   background-color: #FFD700;
@@ -32,6 +33,44 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: 0 0 5px #00ff33;
 }
 
+/* 💫 Shine & Stars Overlay */
+@keyframes shine {
+  0% { transform: translateX(-100%) rotate(-45deg); opacity: 0; }
+  50% { opacity: 0.8; }
+  100% { transform: translateX(100%) rotate(-45deg); opacity: 0; }
+}
+
+.shine-overlay {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  transform: rotate(-45deg);
+  opacity: 0;
+}
+
+.group-hover\:animate-shine {
+  animation: shine 1s linear;
+}
+
+.stars-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255,255,255,0.15) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.3;
+  animation: twinkle 10s infinite alternate;
+}
+
+@keyframes twinkle {
+  from { opacity: 0.2; transform: scale(1); }
+  to { opacity: 0.4; transform: scale(1.05); }
+}
+
+/* 🌟 Extra Animations */
 @keyframes shake {
   10%, 90% { transform: translate3d(-1px, 0, 0); }
   20%, 80% { transform: translate3d(2px, 0, 0); }
@@ -47,5 +86,14 @@ h1, h2, h3, h4, h5, h6 {
   50% { opacity: 0.5; }
 }
 .animate-flicker {
-  animation: flicker 0.2s 3; /* Flicker 3 times quickly */
+  animation: flicker 0.2s 3;
+}
+
+/* ♻️ Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, lazy, Suspense } from 'react';
 import { useProfile } from "../hooks/useProfile.js";
 import { LanguageContext } from '../context/LanguageContext.jsx';
 import { fetchTutorResponse, fetchCompletionQuiz, awardXpAndLogActivity } from "../api.js";
@@ -10,8 +10,9 @@ import CompletionQuiz from './CompletionQuiz.jsx';
 import QuizResult from './QuizResult.jsx';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import Confetti from 'react-confetti';
 import GyanDostMascot from './GyanDostMascot.jsx';
+
+const Confetti = lazy(() => import('react-confetti'));
 
 const popularSchoolTopics = [
   { name: 'Basic Math', icon: '➗', color: 'bg-pink-500'},
@@ -214,7 +215,9 @@ export default function AiTutor({ session }) {
   // Lesson view
   return (
     <div className="max-w-full md:max-w-4xl px-4 mx-auto relative">
+      <Suspense fallback={null}>
       {showLevelUp && <Confetti numberOfPieces={window.innerWidth < 768 ? 150 : 400} />}
+      </Suspense>
       <div className="flex flex-col gap-2 md:gap-4 items-center mb-4">
         <Link to="/" className="bg-gray-200 px-4 py-3 rounded-lg hover:bg-gray-300 text-center w-full md:w-auto">
           ‹ Dashboard
