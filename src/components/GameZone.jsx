@@ -2,7 +2,6 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Howl } from 'howler';
-import GyanDostMascot from "./GyanDostMascot.jsx";
 
 // 🎶 Sound preload
 const popSound = new Howl({ src: ["/sounds/click.mp3"], preload: true });
@@ -198,17 +197,6 @@ export default function GameZone({ profile }) {
             <GameCard key={game.title} {...game} delay={0.5 + index * 0.1} setMascotState={setMascotState} />
           ))}
         </div>
-      </motion.div>
-
-      {/* Mascot */}
-      <motion.div
-        className="absolute bottom-5 right-5 z-20"
-        initial={{ x: 100, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        transition={{ delay: 1.5, type: "spring", stiffness: 100 }}
-        style={{ transform: "translateZ(0)" }}
-      >
-        <GyanDostMascot state={mascotState} size="large" />
       </motion.div>
     </div>
   );
