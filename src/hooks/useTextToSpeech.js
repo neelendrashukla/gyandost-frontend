@@ -35,6 +35,15 @@ export function useTextToSpeech(onEndCallback = () => {}) {
     return text.match(regex).map(t => t.trim()).filter(Boolean);
   };
 
+  // --- Emoji removal regex (comprehensive for common emojis) ---
+  const removeEmojis = (text) => {
+    // Basic emoji ranges
+    return text.replace(
+      /[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F900}-\u{1F9FF}\u{1F018}-\u{1F270}\u{1F18E}\u{1F900}-\u{1F9FF}]/gu,
+      ''
+    );
+  };
+
   // --- Text cleaning logic ---
   const cleanText = (text) => {
     if (!text) return '';
@@ -44,8 +53,9 @@ export function useTextToSpeech(onEndCallback = () => {}) {
     cleanedText = cleanedText.replace(/## और जानें[\s\S]*/g, '');
     cleanedText = cleanedText.replace(/(\n\d\..*)+$/g, '');
     cleanedText = cleanedText.replace(/(LESSON_PLAN:|[*#_`])/g, '');
-    cleanedText = cleanedText.replace(/\n{2,}/g, '\n').trim();
-    return cleanedText;
+    cleanedText = cleanedText.replace(/\n{2,}/g, '\n');
+    cleanedText = removeEmojis(cleanedText); // Remove emojis
+    return cleanedText.trim();
   };
 
   const speakChunk = useCallback((text) => {
@@ -57,8 +67,9 @@ export function useTextToSpeech(onEndCallback = () => {}) {
     const utterance = new SpeechSynthesisUtterance(text);
     if (bestVoice) utterance.voice = bestVoice;
     utterance.lang = 'hi-IN';
-    utterance.rate = 1.0;
-    utterance.pitch = 1.1;
+    utterance.rate = 0.9; // Slightly slower for kids
+    utterance.pitch = 1.2; // Higher pitch for cheerful, kid-friendly voice
+    utterance.volume = 1.0; // Full volume
     utteranceRef.current = utterance;
 
     utterance.onstart = () => {

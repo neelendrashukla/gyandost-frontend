@@ -31,6 +31,7 @@ export const fetchImprovedScriptSegment = (scriptSoFar, userLine, genre, userCla
 export const fetchFinishStory = (storySoFar, genre, userClass, language) => postRequest('/api/finish-story', { storySoFar, genre, userClass, language });
 export const fetchFinishPoem = (poemSoFar, genre, userClass, language) => postRequest('/api/finish-poem', { poemSoFar, genre, userClass, language });
 export const fetchFinishScript = (scriptSoFar, genre, userClass, language) => postRequest('/api/finish-script', { scriptSoFar, genre, userClass, language });
+export const fetchGeneratedVisual = (prompt) => postRequest('/api/generate-visual', { prompt });
 
 // Supabase helpers for Students
 
