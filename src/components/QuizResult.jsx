@@ -57,14 +57,14 @@ export default function QuizResult({ score, questions, answers, onFinish }) {
                 {questions.map((q, index) => {
                   const correct = answers[index] === q.correct_answer;
                   return (
-                    <div key={index} className={`p-4 rounded-lg border-l-4 ${correct ? 'bg-green-50 border-green-500' : 'bg-red-50 border-red-500'}`}>
+                    <motion.div key={index} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }} className={`p-4 rounded-lg border-l-4 ${correct ? 'bg-green-50 border-green-500' : 'bg-red-50 border-red-500'}`}>
                       <p className="font-bold text-gray-800">{index + 1}. {q.question}</p>
                       <p className="mt-1 text-gray-700">Your answer: <span className="font-semibold">{answers[index] || "Not Answered"}</span></p>
                       {!correct && <p className="text-green-800 font-bold">Correct answer: {q.correct_answer}</p>}
                       <div className="mt-2 p-2 bg-yellow-50 rounded-lg text-sm text-yellow-800">
                         <span className="font-bold">Explanation:</span> {q.explanation}
                       </div>
-                    </div>
+                    </motion.div>
                   );
                 })}
               </motion.div>

@@ -76,3 +76,19 @@ export async function awardXpAndLogActivity(userId, xpToAdd, activityType) {
         return null;
     }
 }
+
+// src/api.js
+
+export async function fetchImageFromUnsplash(query) {
+  try {
+    const accessKey = import.meta.env.VITE_UNSPLASH_ACCESS_KEY; // 🔑 add in .env file
+    const response = await fetch(
+      `https://api.unsplash.com/photos/random?query=${encodeURIComponent(query)}&client_id=${accessKey}&orientation=landscape`
+    );
+    const data = await response.json();
+    return data.urls?.regular || null;
+  } catch (error) {
+    console.error("Error fetching image from Unsplash:", error);
+    return null;
+  }
+}

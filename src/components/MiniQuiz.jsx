@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 
 export default function MiniQuiz({ quizText, onOptionClick }) {
     const [selectedOption, setSelectedOption] = useState(null);
@@ -19,17 +20,19 @@ export default function MiniQuiz({ quizText, onOptionClick }) {
             <p className="my-2 text-gray-800">{question}</p>
             <div className="space-y-2">
                 {choices.map((choice, i) => (
-                    <button 
+                    <motion.button 
                         key={i} 
                         onClick={() => handleSelect(choice)} 
                         disabled={!!selectedOption}
+                        whileHover={!selectedOption ? { scale: 1.02, color: 'blue' } : {}}
+                        whileTap={{ scale: 0.98 }}
                         className={`w-full text-left p-2 rounded shadow transition-colors 
                             ${selectedOption === choice ? 'bg-blue-300' : 'bg-white hover:bg-gray-200'}
                             ${selectedOption && 'cursor-not-allowed'}
                         `}
                     >
                         {choice}
-                    </button>
+                    </motion.button>
                 ))}
             </div>
         </div>

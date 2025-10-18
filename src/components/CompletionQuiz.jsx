@@ -24,6 +24,8 @@ export default function CompletionQuiz({ questions, onSubmit, onCancel }) {
     }
   };
 
+  const isAnswered = answers[currentQ];
+
   return (
     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <motion.div
@@ -51,7 +53,7 @@ export default function CompletionQuiz({ questions, onSubmit, onCancel }) {
         </p>
         <div className="w-full bg-gray-200 h-2 rounded-full mb-4 overflow-hidden">
           <motion.div
-            className="bg-blue-500 h-2"
+            className={`h-2 rounded-full ${isAnswered ? 'bg-green-500' : 'bg-blue-500'}`}
             initial={{ width: 0 }}
             animate={{ width: `${((currentQ + 1) / questions.length) * 100}%` }}
             transition={{ duration: 0.5 }}
@@ -75,8 +77,8 @@ export default function CompletionQuiz({ questions, onSubmit, onCancel }) {
                 whileTap={{ scale: 0.97 }}
                 className={`relative p-4 rounded-xl border-2 text-left transition-all flex justify-between items-center overflow-hidden ${
                   isSelected
-                    ? "bg-gradient-to-r from-blue-500 to-blue-600 border-blue-600 text-white shadow-lg"
-                    : "bg-white hover:bg-blue-50 border-gray-200 text-gray-800"
+                    ? "bg-gradient-to-r from-green-500 to-green-600 border-green-600 text-white shadow-lg"
+                    : "bg-white hover:bg-gray-50 border-gray-200 text-gray-800 hover:border-blue-300"
                 }`}
               >
                 {/* Option Text */}
@@ -104,7 +106,7 @@ export default function CompletionQuiz({ questions, onSubmit, onCancel }) {
                     <motion.div
                       key="glow"
                       layoutId="glow"
-                      className="absolute inset-0 rounded-xl bg-blue-400/25 blur-lg z-0"
+                      className="absolute inset-0 rounded-xl bg-green-400/25 blur-lg z-0"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
@@ -120,11 +122,11 @@ export default function CompletionQuiz({ questions, onSubmit, onCancel }) {
         {/* Next Button */}
         <motion.button
           onClick={handleNext}
-          disabled={!answers[currentQ]}
-          whileHover={!answers[currentQ] ? {} : { scale: 1.05 }}
+          disabled={!isAnswered}
+          whileHover={!isAnswered ? {} : { scale: 1.05 }}
           whileTap={{ scale: 0.97 }}
           className={`mt-6 w-full p-3 rounded-xl font-bold text-lg tracking-wide transition-all ${
-            answers[currentQ]
+            isAnswered
               ? "bg-green-500 hover:bg-green-600 text-white shadow-lg"
               : "bg-gray-300 text-gray-500 cursor-not-allowed"
           }`}

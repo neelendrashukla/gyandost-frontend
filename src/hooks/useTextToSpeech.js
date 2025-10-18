@@ -6,7 +6,7 @@ export function useTextToSpeech(onEndCallback = () => {}) {
   const utteranceRef = useRef(null);
   const [bestVoice, setBestVoice] = useState(null);
   const voicesLoadedRef = useRef(false);
-  const queueRef = useRef([]); // for chunked text
+  const queueRef = useRef([]);
 
   // --- Load voices ---
   useEffect(() => {
@@ -28,34 +28,43 @@ export function useTextToSpeech(onEndCallback = () => {}) {
     loadVoices();
   }, []);
 
-  // --- Split long text into chunks (~200 chars) ---
-  const chunkText = (text) => {
-    const maxLen = 200;
-    const regex = new RegExp(`.{1,${maxLen}}([.!?\\n]|$)`, 'g');
-    return text.match(regex).map(t => t.trim()).filter(Boolean);
-  };
-
-  // --- Emoji removal regex (comprehensive for common emojis) ---
-  const removeEmojis = (text) => {
-    // Basic emoji ranges
-    return text.replace(
-      /[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F900}-\u{1F9FF}\u{1F018}-\u{1F270}\u{1F18E}\u{1F900}-\u{1F9FF}]/gu,
+  // --- Remove emojis and unwanted symbols ---
+  const removeEmojisAndSymbols = (text) => {
+    if (!text) return '';
+    let cleaned = text.replace(
+      /([\u2700-\u27BF]|[\uE000-\uF8FF]|[\uD83C-\uDBFF\uDC00-\uDFFF]|[\u2011-\u26FF]|[\u2B05-\u2B07]|[\u2934-\u2935]|[\u25AA-\u25AB]|[\u25B6]|[\u25C0]|[\u25FB-\u25FE]|[\u2600-\u26FF])/g,
       ''
     );
+    cleaned = cleaned.replace(/[^a-zA-Z0-9\u0900-\u097F\s.,!?]/g, '');
+    return cleaned.trim();
   };
 
-  // --- Text cleaning logic ---
+  // --- Add tiny pause after punctuation for natural reading ---
+  const addPauses = (text) => {
+    return text.replace(/([.!?])/g, '$1\u200B'); // zero-width space to break chunks
+  };
+
+  // --- Split long text into chunks (~150-200 chars) ---
+  const chunkText = (text) => {
+    const maxLen = 180;
+    const regex = new RegExp(`.{1,${maxLen}}([.!?\\n]|$)`, 'g');
+    return text.match(regex)?.map(t => t.trim()).filter(Boolean) || [];
+  };
+
+  // --- Clean text for kids ---
   const cleanText = (text) => {
     if (!text) return '';
-    let cleanedText = text;
-    cleanedText = cleanedText.replace(/(MERMAID:|QUIZ:)[\s\S]*?(?=\n\n|$)/g, '');
-    cleanedText = cleanedText.replace(/IMAGE:[\s\S]*?(?=\n\n|$)/g, '');
-    cleanedText = cleanedText.replace(/## और जानें[\s\S]*/g, '');
-    cleanedText = cleanedText.replace(/(\n\d\..*)+$/g, '');
-    cleanedText = cleanedText.replace(/(LESSON_PLAN:|[*#_`])/g, '');
-    cleanedText = cleanedText.replace(/\n{2,}/g, '\n');
-    cleanedText = removeEmojis(cleanedText); // Remove emojis
-    return cleanedText.trim();
+    let cleaned = text;
+    cleaned = cleaned.replace(/(MERMAID:|QUIZ:)[\s\S]*?(?=\n\n|$)/g, '');
+    cleaned = cleaned.replace(/IMAGE:[\s\S]*?(?=\n\n|$)/g, '');
+    cleaned = cleaned.replace(/## और जानें[\s\S]*/g, '');
+    cleaned = cleaned.replace(/(\n\d\..*)+$/g, '');
+    cleaned = cleaned.replace(/(LESSON_PLAN:|[*#_`])/g, '');
+    cleaned = cleaned.replace(/\n{2,}/g, '\n').trim();
+
+    cleaned = removeEmojisAndSymbols(cleaned);
+    cleaned = addPauses(cleaned);
+    return cleaned;
   };
 
   const speakChunk = useCallback((text) => {
@@ -67,9 +76,8 @@ export function useTextToSpeech(onEndCallback = () => {}) {
     const utterance = new SpeechSynthesisUtterance(text);
     if (bestVoice) utterance.voice = bestVoice;
     utterance.lang = 'hi-IN';
-    utterance.rate = 0.9; // Slightly slower for kids
-    utterance.pitch = 1.2; // Higher pitch for cheerful, kid-friendly voice
-    utterance.volume = 1.0; // Full volume
+    utterance.rate = 0.95;  // slightly slower
+    utterance.pitch = 1.2;  // friendly tone
     utteranceRef.current = utterance;
 
     utterance.onstart = () => {
@@ -97,7 +105,6 @@ export function useTextToSpeech(onEndCallback = () => {}) {
     window.speechSynthesis.speak(utterance);
   }, [bestVoice, onEndCallback]);
 
-  // --- Main speak function ---
   const speak = useCallback((text) => {
     if (!window.speechSynthesis) {
       onEndCallback();
@@ -129,7 +136,6 @@ export function useTextToSpeech(onEndCallback = () => {}) {
     speakChunk(nextChunk);
   }, [speakChunk, onEndCallback]);
 
-  // --- Controls ---
   const pause = useCallback(() => {
     if (window.speechSynthesis && isSpeaking && !isPaused) {
       window.speechSynthesis.pause();
