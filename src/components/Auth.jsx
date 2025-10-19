@@ -44,13 +44,13 @@ export default function Auth() {
   const [showPassword, setShowPassword] = useState(false);
   const [isRegister, setIsRegister] = useState(false);
   const [fullName, setFullName] = useState('');
-  const [userClass, setUserClass] = useState('3');
+  const [userClass, setUserClass] = useState('6');
   const [language, setLanguage] = useState('hindi');
   const [showConfetti, setShowConfetti] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [audioUnlocked, setAudioUnlocked] = useState(false);
 
-  const classOptions = ["3","4","5","6","7","8","9"];
+  const classOptions = ["6","7","8","9"];
 
   // 🔓 Unlock audio once
   useEffect(() => {
