@@ -2,98 +2,181 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 🌌 Cosmic Theme Base */
+/* 🌈 Base Theme */
 body {
-  background-color: #1A2A4E; /* Deep Space Blue */
   font-family: 'Poppins', sans-serif;
-  color: #E0E0E0; /* Light text for dark background */
+  background: linear-gradient(180deg, #1b1b02 0%, #270404 50%, #0d021f 100%);
+  color: #ffffff;
+  overflow-x: hidden;
+  transition: background 0.5s ease;
 }
 
+/* ✨ Headings */
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Baloo Bhai 2', cursive;
-  color: #FFD700; /* Headings in star yellow */
+  color: #fff;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
 }
 
-/* 🌠 Background Gradient */
-#root {
-  min-height: 100vh;
-  background: radial-gradient(circle at center, #4A2A6F 0%, #1A2A4E 70%, #0D162B 100%);
-  background-attachment: fixed;
-  position: relative;
-  overflow: hidden;
+/* 🔤 Text Styles */
+p, span, li {
+  color: #f2f2f2;
+  line-height: 1.6;
 }
 
-/* ✨ Small floating stars */
-.star-particle {
-  position: absolute;
-  background-color: #FFD700;
-  border-radius: 50%;
-  opacity: 0.7;
-  animation: float 10s ease-in-out infinite, star-blink 3s ease-in-out infinite;
-  box-shadow: 0 0 5px #00ff33;
+strong {
+  color: #ffe86c;
 }
 
-/* 💫 Shine & Stars Overlay */
-@keyframes shine {
-  0% { transform: translateX(-100%) rotate(-45deg); opacity: 0; }
-  50% { opacity: 0.8; }
-  100% { transform: translateX(100%) rotate(-45deg); opacity: 0; }
+/* 🌟 Buttons */
+button, .btn {
+  background: linear-gradient(135deg, #7d0ba6, #8f26f3);
+  color: #fff;
+  border: none;
+  border-radius: 0.75rem;
+  padding: 0.6rem 1.4rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(67, 30, 81, 0.5);
 }
 
-.shine-overlay {
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-  transform: rotate(-45deg);
-  opacity: 0;
+button:hover, .btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 18px rgba(185, 23, 244, 0.8);
 }
 
-.group-hover\:animate-shine {
-  animation: shine 1s linear;
+/* 💫 Cards */
+.card {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+  backdrop-filter: blur(20px);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.stars-bg::before {
-  content: "";
-  position: absolute;
+.card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 12px 35px rgba(185, 23, 244, 0.4);
+}
+
+.card h3 {
+  color: #fff;
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 0 10px rgba(255,255,255,0.2);
+}
+
+.card p {
+  color: #eaeaea;
+  font-size: 1rem;
+}
+
+/* 🌠 Navbar */
+.navbar {
+  background: rgba(128, 128, 215, 0.434);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1rem 2rem;
+  color: #fff;
+}
+
+.navbar a {
+  color: #ec3b3b;
+  font-weight: 500;
+  margin: 0 1rem;
+  transition: color 0.3s ease;
+}
+
+.navbar a:hover {
+  color: #ffd54f;
+}
+
+/* 🌌 Section Titles */
+.section-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 0 12px rgba(0,0,0,0.3);
+  margin-bottom: 1rem;
+}
+
+/* ✨ Input Fields */
+input, textarea {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 0.5rem;
+  padding: 0.6rem 1rem;
+  color: #fff;
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+input:focus, textarea:focus {
+  border-color: #ffd54f;
+  box-shadow: 0 0 10px rgba(255, 213, 79, 0.5);
+}
+
+/* 🌌 Stars Background */
+.stars-bg {
+  position: fixed;
   inset: 0;
   background: radial-gradient(circle, rgba(255,255,255,0.15) 1px, transparent 1px);
-  background-size: 40px 40px;
-  opacity: 0.3;
-  animation: twinkle 10s infinite alternate;
+  background-size: 50px 50px;
+  animation: twinkle 6s infinite alternate;
+  z-index: -1;
 }
 
 @keyframes twinkle {
-  from { opacity: 0.2; transform: scale(1); }
-  to { opacity: 0.4; transform: scale(1.05); }
+  from { opacity: 0.3; transform: scale(1); }
+  to { opacity: 0.6; transform: scale(1.05); }
 }
 
-/* 🌟 Extra Animations */
-@keyframes shake {
-  10%, 90% { transform: translate3d(-1px, 0, 0); }
-  20%, 80% { transform: translate3d(2px, 0, 0); }
-  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-  40%, 60% { transform: translate3d(4px, 0, 0); }
-}
-.animate-shake {
-  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
-}
-
-@keyframes flicker {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-.animate-flicker {
-  animation: flicker 0.2s 3;
+/* 🌟 Floating Stars */
+.star {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #034c79;
+  border-radius: 50%;
+  animation: floatStar 5s ease-in-out infinite, blink 3s ease-in-out infinite;
+  box-shadow: 0 0 10px #efef09;
 }
 
-/* ♻️ Reduced Motion Support */
+@keyframes floatStar {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes blink {
+  0%,100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+/* 💎 Extra Effects */
+.glow {
+  box-shadow: 0 0 10px #b917f4, 0 0 20px #b917f4;
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+/* ♻️ Accessibility */
 @media (prefers-reduced-motion: reduce) {
   * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    animation: none !important;
+    transition: none !important;
   }
 }
